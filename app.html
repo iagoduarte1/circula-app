@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Circula — App</title>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --sage:#2d5a45;--sage-l:#3d7a5f;--sage-pale:#e8f2ec;
+  --ink:#0f1117;--ink-s:#3a3d4a;--ink-m:#6e717d;
+  --gold:#c4972a;--gold-pale:#fdf6e3;
+  --cream:#fafaf7;--white:#fff;
+  --border:rgba(15,17,23,0.1);--border-s:rgba(15,17,23,0.18);
+  --red:#c0392b;--red-pale:#fdf0ee;
+}
+html,body{height:100%;font-family:'Sora',sans-serif;background:var(--cream);color:var(--ink)}
+
+/* ===== AUTH SCREEN ===== */
+#auth-screen{
+  display:flex;align-items:center;justify-content:center;
+  min-height:100vh;padding:24px;
+  background:var(--ink);
+  position:fixed;inset:0;z-index:200;
+}
+.auth-card{
+  background:var(--white);border-radius:20px;
+  padding:48px 40px;max-width:420px;width:100%;
+  text-align:center;
+}
+.auth-logo{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:32px}
+.auth-lm{width:42px;height:42px;background:var(--sage);border-radius:11px;display:flex;align-items:center;justify-content:center;color:white;font-family:'Libre Baskerville',serif;font-size:21px}
+.auth-lt{font-size:20px;font-weight:600;color:var(--ink)}
+.auth-card h2{font-family:'Libre Baskerville',serif;font-size:26px;color:var(--ink);margin-bottom:8px}
+.auth-card p{font-size:14px;color:var(--ink-m);margin-bottom:32px;line-height:1.6}
+.auth-tabs{display:flex;background:var(--cream);border-radius:10px;padding:4px;margin-bottom:28px;gap:4px}
+.auth-tab{flex:1;padding:9px;border:none;background:none;border-radius:7px;font-family:'Sora',sans-serif;font-size:13px;font-weight:500;color:var(--ink-m);cursor:pointer;transition:all .15s}
+.auth-tab.active{background:white;color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.auth-group{display:flex;flex-direction:column;gap:12px;margin-bottom:20px}
+.auth-input{font-family:'Sora',sans-serif;font-size:14px;color:var(--ink);background:var(--cream);border:1.5px solid var(--border-s);border-radius:10px;padding:12px 14px;outline:none;width:100%;transition:border-color .15s}
+.auth-input:focus{border-color:var(--sage);background:white}
+.auth-btn{width:100%;background:var(--sage);color:white;border:none;border-radius:10px;padding:13px;font-family:'Sora',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;margin-bottom:16px}
+.auth-btn:hover{background:var(--sage-l)}
+.auth-sep{font-size:12px;color:var(--ink-m);margin-bottom:16px;position:relative}
+.auth-sep::before,.auth-sep::after{content:'';position:absolute;top:50%;width:42%;height:1px;background:var(--border-s)}
+.auth-sep::before{left:0}.auth-sep::after{right:0}
+.auth-google{width:100%;background:white;color:var(--ink-s);border:1.5px solid var(--border-s);border-radius:10px;padding:12px;font-family:'Sora',sans-serif;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:all .15s}
+.auth-google:hover{border-color:var(--ink-m);background:var(--cream)}
+.auth-err{font-size:12px;color:var(--red);background:var(--red-pale);border-radius:8px;padding:8px 12px;display:none}
+.auth-err.show{display:block}
+.auth-skip{margin-top:16px;font-size:12px;color:var(--ink-m)}
+.auth-skip a{color:var(--sage);text-decoration:none;font-weight:500}
+
+/* ===== MAIN APP ===== */
+#app-screen{display:none;flex-direction:column;min-height:100vh}
+#app-screen.show{display:flex}
+
+/* TOPBAR */
+.topbar{
+  background:var(--white);border-bottom:1px solid var(--border);
+  padding:0 24px;height:60px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:50;
+}
+.tb-logo{display:flex;align-items:center;gap:8px;text-decoration:none}
+.tb-lm{width:30px;height:30px;background:var(--sage);border-radius:7px;display:flex;align-items:center;justify-content:center;color:white;font-family:'Libre Baskerville',serif;font-size:15px}
+.tb-lt{font-size:15px;font-weight:600;color:var(--ink)}
+.tb-right{display:flex;align-items:center;gap:16px}
+.usage-pill{display:flex;align-items:center;gap:8px;background:var(--cream);border:1px solid var(--border-s);border-radius:100px;padding:5px 12px;font-size:12px}
+.usage-bar-wrap{width:60px;height:5px;background:var(--border-s);border-radius:100px;overflow:hidden}
+.usage-bar{height:100%;background:var(--sage);border-radius:100px;transition:width .4s}
+.usage-bar.warn{background:var(--gold)}
+.usage-bar.full{background:var(--red)}
+.plan-badge{font-size:11px;font-weight:600;padding:4px 10px;border-radius:100px}
+.plan-badge.free{background:var(--cream);color:var(--ink-m);border:1px solid var(--border-s)}
+.plan-badge.pro{background:var(--gold-pale);color:var(--gold);border:1px solid rgba(196,151,42,.2)}
+.tb-user{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--ink-s);position:relative}
+.tb-avatar{width:30px;height:30px;border-radius:50%;background:var(--sage-pale);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--sage)}
+.tb-menu{position:absolute;top:calc(100% + 8px);right:0;background:white;border:1px solid var(--border-s);border-radius:12px;padding:8px;min-width:180px;box-shadow:0 8px 24px rgba(0,0,0,.1);display:none;z-index:99}
+.tb-menu.open{display:block}
+.tb-menu a,.tb-menu button{display:block;width:100%;text-align:left;padding:9px 12px;font-family:'Sora',sans-serif;font-size:13px;color:var(--ink-s);background:none;border:none;cursor:pointer;border-radius:8px;text-decoration:none;transition:background .1s}
+.tb-menu a:hover,.tb-menu button:hover{background:var(--cream)}
+.tb-menu .danger{color:var(--red)}
+
+/* LAYOUT */
+.app-body{display:grid;grid-template-columns:360px 1fr;flex:1;min-height:0}
+
+/* PAINEL ESQUERDO */
+.panel-l{
+  background:var(--white);border-right:1px solid var(--border);
+  padding:24px 20px;overflow-y:auto;
+  display:flex;flex-direction:column;gap:20px;
+}
+.slbl{font-size:10px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--ink-m);margin-bottom:8px}
+.tipos-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.tipo-btn{
+  background:var(--cream);border:1.5px solid var(--border-s);border-radius:9px;
+  padding:10px 8px;cursor:pointer;
+  font-family:'Sora',sans-serif;font-size:11px;font-weight:500;color:var(--ink-m);
+  text-align:center;line-height:1.3;transition:all .15s;
+}
+.tipo-btn:hover{border-color:var(--sage);color:var(--ink);background:#f0faf5}
+.tipo-btn.active{background:var(--sage);border-color:var(--sage);color:white}
+.tipo-btn .ti{font-size:17px;display:block;margin-bottom:3px}
+.fgroup{display:flex;flex-direction:column;gap:5px}
+.fgroup label{font-size:12px;font-weight:500;color:var(--ink)}
+.fgroup input,.fgroup textarea,.fgroup select{
+  font-family:'Sora',sans-serif;font-size:13px;color:var(--ink);
+  background:var(--cream);border:1.5px solid var(--border-s);border-radius:8px;
+  padding:9px 11px;outline:none;transition:border-color .15s;resize:vertical;
+}
+.fgroup input:focus,.fgroup textarea:focus,.fgroup select:focus{border-color:var(--sage);background:white}
+.num-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.campos-din{display:flex;flex-direction:column;gap:10px}
+.btn-gerar{
+  background:var(--sage);color:white;border:none;border-radius:10px;
+  padding:14px;font-family:'Sora',sans-serif;font-size:14px;font-weight:600;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;
+  transition:all .2s;width:100%;
+}
+.btn-gerar:hover{background:var(--sage-l);transform:translateY(-1px)}
+.btn-gerar:disabled{background:var(--border-s);color:var(--ink-m);cursor:not-allowed;transform:none}
+.spinner{width:15px;height:15px;border:2px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite;display:none}
+.btn-gerar.loading .spinner{display:block}
+.btn-gerar.loading .btn-txt{display:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+.divider{height:1px;background:var(--border)}
+
+/* PAINEL DIREITO */
+.panel-r{padding:28px 32px;display:flex;flex-direction:column;gap:20px;overflow-y:auto}
+
+/* EMPTY */
+.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:60px;min-height:400px}
+.empty-icon{width:68px;height:68px;background:var(--cream);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px}
+.empty h2{font-family:'Libre Baskerville',serif;font-size:22px;color:var(--ink);font-weight:500}
+.empty p{font-size:13px;color:var(--ink-m);max-width:300px;line-height:1.6}
+
+/* LOADING */
+.loading-state{display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:80px;min-height:400px}
+.loading-state.show{display:flex}
+.ldots{display:flex;gap:5px}
+.ldots span{width:8px;height:8px;background:var(--sage);border-radius:50%;animation:bounce 1.2s infinite}
+.ldots span:nth-child(2){animation-delay:.2s}
+.ldots span:nth-child(3){animation-delay:.4s}
+@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-9px)}}
+.loading-state p{font-size:14px;color:var(--ink-m)}
+
+/* RESULTADO */
+.resultado{display:none;flex-direction:column;gap:16px}
+.resultado.show{display:flex;animation:fadeUp .3s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.res-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.res-title{font-family:'Libre Baskerville',serif;font-size:20px;color:var(--ink);font-weight:500}
+.res-actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn-act{
+  background:white;border:1.5px solid var(--border-s);border-radius:8px;
+  padding:8px 14px;font-family:'Sora',sans-serif;font-size:12px;font-weight:500;color:var(--ink-m);
+  cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .15s;
+}
+.btn-act:hover{border-color:var(--sage);color:var(--sage)}
+.btn-act.prim{background:var(--sage);border-color:var(--sage);color:white}
+.btn-act.prim:hover{background:var(--sage-l);color:white}
+.legenda{
+  background:var(--gold-pale);border:1px solid rgba(196,151,42,.25);
+  border-radius:9px;padding:10px 14px;
+  font-size:12px;color:#7a5c00;line-height:1.5;
+  display:flex;gap:8px;align-items:flex-start;
+}
+.doc-wrap{background:white;border:1px solid var(--border-s);border-radius:13px;box-shadow:0 2px 16px rgba(0,0,0,.06);overflow:hidden}
+.doc-bar{background:#f0efec;border-bottom:1px solid var(--border);padding:10px 14px;display:flex;align-items:center;gap:6px}
+.dbd{width:10px;height:10px;border-radius:50%}
+.dbl{font-size:11px;color:var(--ink-m);margin-left:8px}
+.doc{padding:40px 48px;font-size:14px;line-height:1.85;color:var(--ink);min-height:380px;outline:none;white-space:pre-wrap;word-break:break-word}
+.doc .ce{
+  background:#fff3cd;border:1.5px dashed #c9a84c;border-radius:4px;
+  padding:1px 6px;color:#7a5c00;font-weight:500;cursor:pointer;
+  display:inline;transition:background .15s;
+}
+.doc .ce:hover{background:#ffe8a0}
+
+/* UPGRADE BANNER */
+.upgrade-bar{
+  background:linear-gradient(135deg,var(--sage) 0%,var(--sage-l) 100%);
+  border-radius:12px;padding:20px 24px;
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  flex-wrap:wrap;
+}
+.upgrade-bar p{font-size:14px;color:rgba(255,255,255,.85);font-weight:400}
+.upgrade-bar strong{color:white}
+.upgrade-btn{background:white;color:var(--sage);border:none;border-radius:8px;padding:9px 18px;font-family:'Sora',sans-serif;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .15s}
+.upgrade-btn:hover{background:rgba(255,255,255,.92)}
+
+/* LIMIT MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(15,17,23,.6);backdrop-filter:blur(4px);z-index:300;display:none;align-items:center;justify-content:center;padding:24px}
+.modal-overlay.show{display:flex}
+.modal{background:white;border-radius:20px;padding:40px;max-width:440px;width:100%;text-align:center}
+.modal h2{font-family:'Libre Baskerville',serif;font-size:28px;margin-bottom:10px;color:var(--ink)}
+.modal p{font-size:14px;color:var(--ink-m);line-height:1.7;margin-bottom:28px}
+.modal-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.modal-btn-p{background:var(--sage);color:white;border:none;border-radius:10px;padding:13px 28px;font-family:'Sora',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:background .15s}
+.modal-btn-p:hover{background:var(--sage-l)}
+.modal-btn-s{background:none;color:var(--ink-m);border:1.5px solid var(--border-s);border-radius:10px;padding:12px 24px;font-family:'Sora',sans-serif;font-size:14px;cursor:pointer;transition:all .15s}
+.modal-btn-s:hover{border-color:var(--ink-m)}
+
+@media(max-width:768px){
+  .app-body{grid-template-columns:1fr}
+  .panel-l{border-right:none;border-bottom:1px solid var(--border)}
+  .doc{padding:24px}
+  .tb-right .usage-pill{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="auth-lm">C</div>
+      <span class="auth-lt">Circula</span>
+    </div>
+    <h2>Bem-vindo!</h2>
+    <p>Gere comunicados escolares profissionais em segundos com IA.</p>
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="setTab('login')">Entrar</button>
+      <button class="auth-tab" onclick="setTab('register')">Criar conta</button>
+    </div>
+    <div class="auth-group">
+      <div id="name-group" style="display:none">
+        <input class="auth-input" id="auth-name" type="text" placeholder="Nome da escola ou responsável">
+      </div>
+      <input class="auth-input" id="auth-email" type="email" placeholder="E-mail">
+      <input class="auth-input" id="auth-pass" type="password" placeholder="Senha" onkeydown="if(event.key==='Enter')doAuth()">
+    </div>
+    <div class="auth-err" id="auth-err"></div>
+    <button class="auth-btn" id="auth-submit" onclick="doAuth()">Entrar</button>
+    <div class="auth-sep">ou</div>
+    <button class="auth-google" onclick="doGoogle()">
+      <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+      Continuar com Google
+    </button>
+    <p class="auth-skip">Quer testar sem criar conta? <a href="#" onclick="guestMode()">Entrar como visitante</a></p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app-screen">
+  <div class="topbar">
+    <a href="index.html" class="tb-logo">
+      <div class="tb-lm">C</div>
+      <span class="tb-lt">Circula</span>
+    </a>
+    <div class="tb-right">
+      <div class="usage-pill" id="usage-pill">
+        <span id="usage-txt" style="font-size:12px;color:var(--ink-m)">0/10 este mês</span>
+        <div class="usage-bar-wrap"><div class="usage-bar" id="usage-bar" style="width:0%"></div></div>
+      </div>
+      <span class="plan-badge free" id="plan-badge">Grátis</span>
+      <div class="tb-user" onclick="toggleMenu()">
+        <div class="tb-avatar" id="tb-avatar">?</div>
+        <span id="tb-name" style="font-size:13px">Conta</span>
+        <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        <div class="tb-menu" id="tb-menu">
+          <a href="index.html">← Página inicial</a>
+          <button onclick="showUpgrade()">⭐ Fazer upgrade</button>
+          <button class="danger" onclick="signOut()">Sair</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-body">
+    <!-- ESQUERDO -->
+    <div class="panel-l">
+      <div>
+        <div class="slbl">Tipo de comunicado</div>
+        <div class="tipos-grid" id="tipos-grid">
+          <button class="tipo-btn active" data-tipo="circular" onclick="selTipo(this)"><span class="ti">📋</span>Circular Geral</button>
+          <button class="tipo-btn" data-tipo="avaliacao" onclick="selTipo(this)"><span class="ti">📝</span>Avaliação / Prova</button>
+          <button class="tipo-btn" data-tipo="evento" onclick="selTipo(this)"><span class="ti">🎉</span>Evento / Data</button>
+          <button class="tipo-btn" data-tipo="reuniao" onclick="selTipo(this)"><span class="ti">👥</span>Reunião de Pais</button>
+          <button class="tipo-btn" data-tipo="suspensao" onclick="selTipo(this)"><span class="ti">📅</span>Suspensão de Aulas</button>
+          <button class="tipo-btn" data-tipo="pagamento" onclick="selTipo(this)"><span class="ti">💰</span>Pagamento</button>
+          <button class="tipo-btn" data-tipo="disciplinar" onclick="selTipo(this)"><span class="ti">📌</span>Disciplinar</button>
+          <button class="tipo-btn" data-tipo="livro" onclick="selTipo(this)"><span class="ti">📚</span>Livro / Material</button>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div>
+        <div class="slbl">Identificação</div>
+        <div class="campos-din">
+          <div class="num-row">
+            <div class="fgroup"><label>Nº do comunicado</label><input type="text" id="f-num" placeholder="Ex: 105"></div>
+            <div class="fgroup"><label>Ano</label><input type="text" id="f-ano" value="2026"></div>
+          </div>
+          <div class="fgroup"><label>Turma(s)</label><input type="text" id="f-turmas" placeholder="Ex: 601, 701 ou Todos"></div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <div id="campos-tipo" class="campos-din"></div>
+      <div class="divider"></div>
+
+      <div>
+        <div class="slbl">Tom</div>
+        <div class="fgroup">
+          <select id="f-tom">
+            <option value="padrao">Padrão institucional</option>
+            <option value="urgente">Urgente / atenção especial</option>
+            <option value="informativo">Apenas informativo</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <div class="slbl">Informações adicionais</div>
+        <div class="fgroup">
+          <textarea id="f-extra" rows="3" placeholder="Alguma informação específica que deva constar..."></textarea>
+        </div>
+      </div>
+
+      <button class="btn-gerar" id="btn-gerar" onclick="gerar()">
+        <div class="spinner"></div>
+        <span class="btn-txt">✦ Gerar Comunicado</span>
+      </button>
+    </div>
+
+    <!-- DIREITO -->
+    <div class="panel-r" id="panel-r">
+
+      <div class="empty" id="empty-state">
+        <div class="empty-icon">📄</div>
+        <h2>Seu comunicado aparecerá aqui</h2>
+        <p>Selecione o tipo, preencha os campos e clique em <strong>Gerar Comunicado</strong>.</p>
+      </div>
+
+      <div class="loading-state" id="loading-state">
+        <div class="ldots"><span></span><span></span><span></span></div>
+        <p>Gerando seu comunicado...</p>
+      </div>
+
+      <div class="resultado" id="resultado">
+        <div class="res-header">
+          <span class="res-title" id="res-title">Comunicado gerado</span>
+          <div class="res-actions">
+            <button class="btn-act" onclick="gerar()">↺ Regenerar</button>
+            <button class="btn-act" onclick="copiar()">⎘ Copiar texto</button>
+            <button class="btn-act prim" onclick="imprimir()">⎙ Imprimir / PDF</button>
+          </div>
+        </div>
+        <div class="legenda">⚠ <span>Campos em <strong>amarelo tracejado</strong> precisam ser preenchidos por você. Clique para editar diretamente.</span></div>
+        <div class="doc-wrap">
+          <div class="doc-bar">
+            <div class="dbd" style="background:#ff5f57"></div>
+            <div class="dbd" style="background:#febc2e"></div>
+            <div class="dbd" style="background:#28c840"></div>
+            <span class="dbl" id="doc-fname">comunicado.txt</span>
+          </div>
+          <div class="doc" id="doc-content" contenteditable="true"></div>
+        </div>
+
+        <div class="upgrade-bar" id="upgrade-bar" style="display:none">
+          <p><strong>Você está no plano Grátis.</strong> Faça upgrade para comunicados ilimitados, histórico e suporte prioritário.</p>
+          <button class="upgrade-btn" onclick="showUpgrade()">Ver planos Pro →</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- MODAL LIMITE -->
+<div class="modal-overlay" id="limit-modal">
+  <div class="modal">
+    <div style="font-size:40px;margin-bottom:16px">🎯</div>
+    <h2>Limite do mês atingido</h2>
+    <p>Você usou todos os 10 comunicados gratuitos deste mês. Faça upgrade para o plano Pro e tenha comunicados ilimitados, histórico completo e suporte prioritário.</p>
+    <div class="modal-actions">
+      <button class="modal-btn-p" onclick="showUpgrade()">Ver planos Pro</button>
+      <button class="modal-btn-s" onclick="closeModal()">Agora não</button>
+    </div>
+  </div>
+</div>
+
+<!-- FIREBASE -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut as fbSignOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getFirestore, doc, getDoc, setDoc, updateDoc, increment } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+// ── CONFIGURE AQUI ────────────────────────────────────────────────────────────
+const firebaseConfig = {
+  apiKey: "COLE_SEU_FIREBASE_API_KEY",
+  authDomain: "COLE_SEU_AUTH_DOMAIN",
+  projectId: "COLE_SEU_PROJECT_ID",
+  storageBucket: "COLE_SEU_STORAGE_BUCKET",
+  messagingSenderId: "COLE_SEU_SENDER_ID",
+  appId: "COLE_SEU_APP_ID"
+};
+// ──────────────────────────────────────────────────────────────────────────────
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const provider = new GoogleAuthProvider();
+
+let currentUser = null;
+let userData = { plan: 'free', usage: 0, limit: 10 };
+
+async function loadUserData(uid) {
+  const ref = doc(db, 'users', uid);
+  const snap = await getDoc(ref);
+  const now = new Date();
+  const month = `${now.getFullYear()}-${now.getMonth()}`;
+  if (!snap.exists()) {
+    const d = { plan:'free', usage:0, limit:10, month, name: currentUser.displayName || '' };
+    await setDoc(ref, d);
+    userData = d;
+  } else {
+    const d = snap.data();
+    if (d.month !== month) {
+      await updateDoc(ref, { usage: 0, month });
+      d.usage = 0; d.month = month;
+    }
+    userData = d;
+  }
+  updateUI();
+}
+
+function updateUI() {
+  const { plan, usage, limit } = userData;
+  const u = Math.min(usage, limit);
+  const pct = (u / limit) * 100;
+  document.getElementById('usage-txt').textContent = `${u}/${limit} este mês`;
+  const bar = document.getElementById('usage-bar');
+  bar.style.width = pct + '%';
+  bar.className = 'usage-bar' + (pct >= 100 ? ' full' : pct >= 70 ? ' warn' : '');
+  const badge = document.getElementById('plan-badge');
+  badge.textContent = plan === 'pro' ? 'Pro' : 'Grátis';
+  badge.className = 'plan-badge ' + (plan === 'pro' ? 'pro' : 'free');
+  const ub = document.getElementById('upgrade-bar');
+  if (ub) ub.style.display = plan === 'free' ? 'flex' : 'none';
+}
+
+async function incUsage() {
+  if (!currentUser) return;
+  const ref = doc(db, 'users', currentUser.uid);
+  await updateDoc(ref, { usage: increment(1) });
+  userData.usage++;
+  updateUI();
+}
+
+window.canGenerate = () => {
+  if (!currentUser) return userData.plan !== 'used' || userData.usage < userData.limit;
+  return userData.plan === 'pro' || userData.usage < userData.limit;
+};
+
+window.afterGenerate = async () => {
+  if (currentUser) await incUsage();
+  else { userData.usage = (userData.usage || 0) + 1; updateUI(); }
+};
+
+onAuthStateChanged(auth, async user => {
+  if (user) {
+    currentUser = user;
+    const av = document.getElementById('tb-avatar');
+    const nm = document.getElementById('tb-name');
+    if (av) { av.textContent = (user.displayName || user.email || 'U')[0].toUpperCase(); }
+    if (nm) { nm.textContent = (user.displayName || user.email || '').split(' ')[0].split('@')[0]; }
+    await loadUserData(user.uid);
+    showApp();
+  }
+});
+
+window.doAuth = async () => {
+  const email = document.getElementById('auth-email').value.trim();
+  const pass = document.getElementById('auth-pass').value;
+  const isReg = document.querySelector('.auth-tab.active').textContent.trim() === 'Criar conta';
+  const btn = document.getElementById('auth-submit');
+  btn.textContent = 'Aguarde...'; btn.disabled = true;
+  try {
+    if (isReg) { await createUserWithEmailAndPassword(auth, email, pass); }
+    else { await signInWithEmailAndPassword(auth, email, pass); }
+  } catch(e) {
+    showErr(e.code === 'auth/invalid-credential' ? 'E-mail ou senha incorretos.' :
+            e.code === 'auth/email-already-in-use' ? 'E-mail já cadastrado.' :
+            e.code === 'auth/weak-password' ? 'Senha fraca (mín. 6 caracteres).' :
+            'Erro: ' + e.message);
+    btn.textContent = isReg ? 'Criar conta' : 'Entrar'; btn.disabled = false;
+  }
+};
+
+window.doGoogle = async () => {
+  try { await signInWithPopup(auth, provider); }
+  catch(e) { showErr('Erro ao entrar com Google: ' + e.message); }
+};
+
+window.signOut = async () => {
+  await fbSignOut(auth);
+  currentUser = null;
+  userData = { plan:'free', usage:0, limit:10 };
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('app-screen').classList.remove('show');
+};
+
+window.guestMode = () => {
+  userData = { plan:'free', usage:0, limit:3 };
+  document.getElementById('usage-txt').textContent = '0/3 (visitante)';
+  document.getElementById('tb-name').textContent = 'Visitante';
+  document.getElementById('tb-avatar').textContent = 'V';
+  updateUI();
+  showApp();
+};
+
+function showApp() {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app-screen').classList.add('show');
+}
+
+function showErr(msg) {
+  const el = document.getElementById('auth-err');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 4000);
+}
+</script>
+
+<script>
+// ── APP LOGIC ─────────────────────────────────────────────────────────────────
+
+const SYSTEM = `Você é um assistente especializado em redigir comunicados escolares para um colégio particular em Nova Iguaçu, RJ. Reproduza fielmente o padrão dos comunicados reais desse colégio.
+
+PADRÕES OBRIGATÓRIOS:
+1. Início: "Nova Iguaçu, [data por extenso]."
+2. "COMUNICADO Nº: [número]/[ano]" em maiúsculas
+3. "ASSUNTO: [ASSUNTO EM MAIÚSCULAS]"
+4. Saudação: "Querida família,"
+5. Encerramento: "Atenciosamente," ou "Carinhosamente," + "A Direção."
+6. Tom: formal, acolhedor, institucional
+7. Turmas: "601, 701" etc. ou "Ensino Fundamental I, II e Ensino Médio"
+8. Destaques com asterisco (*) para notas de rodapé importantes
+9. Nomenclatura: "Colégio" (C maiúsculo), "Secretaria do Colégio", "ClassApp", "2ª chamada", "Responsável pelo aluno"
+10. Para campos em aberto use: [[CAMPO: descrição]]
+
+Retorne APENAS o texto do comunicado, sem explicações adicionais.`;
+
+const CAMPOS = {
+  circular:[
+    {id:'c-assunto',label:'Assunto principal',type:'input',ph:'Ex: Organização das aulas de Educação Física'},
+    {id:'c-desc',label:'Descreva o comunicado',type:'textarea',rows:4,ph:'O que precisa ser informado às famílias?'},
+  ],
+  avaliacao:[
+    {id:'c-bim',label:'Bimestre',type:'input',ph:'Ex: 4º Bimestre'},
+    {id:'c-di',label:'Data de início',type:'input',ph:'Ex: 24/11/2026 (segunda-feira)'},
+    {id:'c-df',label:'Data de término',type:'input',ph:'Ex: 03/12/2026 (quarta-feira)'},
+    {id:'c-nivel',label:'Nível(is) de ensino',type:'input',ph:'Ex: Fundamental I, II e Ensino Médio'},
+    {id:'c-tabela',label:'Incluir tabela de horários?',type:'select',opts:['Sim','Não']},
+  ],
+  evento:[
+    {id:'c-nome',label:'Nome do evento',type:'input',ph:'Ex: Festa Junina, Mostra Cultural'},
+    {id:'c-data',label:'Data do evento',type:'input',ph:'Ex: 21/06/2026 (sábado)'},
+    {id:'c-hora',label:'Horário',type:'input',ph:'Ex: 9h às 13h'},
+    {id:'c-desc',label:'Detalhes do evento',type:'textarea',rows:3,ph:'O que acontecerá? Como as famílias devem se preparar?'},
+  ],
+  reuniao:[
+    {id:'c-data',label:'Data da reunião',type:'input',ph:'Ex: 05/05/2026 (terça-feira)'},
+    {id:'c-hora',label:'Horário',type:'input',ph:'Ex: 19h às 21h'},
+    {id:'c-local',label:'Local',type:'input',ph:'Ex: Auditório do Colégio'},
+    {id:'c-pauta',label:'Pauta / assunto',type:'textarea',rows:3,ph:'Temas que serão tratados na reunião'},
+  ],
+  suspensao:[
+    {id:'c-data',label:'Data(s)',type:'input',ph:'Ex: 15/05/2026 (sexta-feira)'},
+    {id:'c-motivo',label:'Motivo',type:'input',ph:'Ex: Feriado municipal de Nova Iguaçu'},
+    {id:'c-ret',label:'Data de retorno',type:'input',ph:'Ex: 16/05/2026 (segunda-feira)'},
+  ],
+  pagamento:[
+    {id:'c-comp',label:'Competência (mês/ano)',type:'input',ph:'Ex: Maio/2026'},
+    {id:'c-venc',label:'Data de vencimento',type:'input',ph:'Ex: 10/05/2026'},
+    {id:'c-val',label:'Valor (ou deixe em branco)',type:'input',ph:'Ex: R$ 850,00'},
+    {id:'c-multa',label:'Mencionar multa/juros?',type:'select',opts:['Sim','Não']},
+  ],
+  disciplinar:[
+    {id:'c-assunto',label:'Assunto disciplinar',type:'input',ph:'Ex: Uso de celular, fardamento'},
+    {id:'c-desc',label:'Descreva a situação',type:'textarea',rows:4,ph:'O que ocorreu e o que precisa ser comunicado?'},
+    {id:'c-acao',label:'Ação esperada das famílias',type:'input',ph:'Ex: Conversar com o aluno, assinar ciente...'},
+  ],
+  livro:[
+    {id:'c-titulo',label:'Título do livro',type:'input',ph:'Ex: Ensaio sobre a Cegueira'},
+    {id:'c-disc',label:'Disciplina',type:'input',ph:'Ex: Língua Portuguesa e Redação'},
+    {id:'c-bim',label:'Bimestre(s) de uso',type:'input',ph:'Ex: 1º e 2º bimestres'},
+    {id:'c-desc',label:'Informações adicionais',type:'textarea',rows:3,ph:'Como o livro será usado, orientações...'},
+  ],
+};
+
+const TITULOS = {circular:'Circular Geral',avaliacao:'Avaliação Bimestral',evento:'Evento Escolar',reuniao:'Reunião de Pais',suspensao:'Suspensão de Aulas',pagamento:'Aviso de Pagamento',disciplinar:'Comunicado Disciplinar',livro:'Livro / Material Didático'};
+
+let tipo = 'circular';
+let tabAtual = 'login';
+
+function setTab(t) {
+  tabAtual = t;
+  document.querySelectorAll('.auth-tab').forEach((b,i) => b.classList.toggle('active', (i===0&&t==='login')||(i===1&&t==='register')));
+  document.getElementById('auth-submit').textContent = t==='register' ? 'Criar conta' : 'Entrar';
+  const ng = document.getElementById('name-group');
+  if(ng) ng.style.display = t==='register' ? 'block' : 'none';
+}
+
+function selTipo(btn) {
+  document.querySelectorAll('.tipo-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  tipo = btn.dataset.tipo;
+  renderCampos();
+}
+
+function renderCampos() {
+  const c = document.getElementById('campos-tipo');
+  const campos = CAMPOS[tipo] || [];
+  c.innerHTML = `<div class="slbl">Campos específicos</div>` + campos.map(f => {
+    if(f.type==='textarea') return `<div class="fgroup"><label>${f.label}</label><textarea id="${f.id}" rows="${f.rows||3}" placeholder="${f.ph||''}"></textarea></div>`;
+    if(f.type==='select') return `<div class="fgroup"><label>${f.label}</label><select id="${f.id}">${f.opts.map(o=>`<option>${o}</option>`).join('')}</select></div>`;
+    return `<div class="fgroup"><label>${f.label}</label><input type="text" id="${f.id}" placeholder="${f.ph||''}"></div>`;
+  }).join('');
+}
+
+function coletar() {
+  const d = { tipo, num: val('f-num')||'___', ano: val('f-ano')||'2026', turmas: val('f-turmas'), tom: val('f-tom'), extra: val('f-extra') };
+  (CAMPOS[tipo]||[]).forEach(f => { const el = document.getElementById(f.id); if(el) d[f.id] = el.value; });
+  return d;
+}
+
+function val(id) { const el = document.getElementById(id); return el ? el.value : ''; }
+
+function buildPrompt(d) {
+  const tl = TITULOS[d.tipo] || d.tipo;
+  let p = `Gere um comunicado escolar — Tipo: ${tl}\nNº: ${d.num}/${d.ano}\n`;
+  if(d.turmas) p += `Turmas: ${d.turmas}\n`;
+  p += `Tom: ${d.tom==='urgente'?'Urgente, com atenção especial':d.tom==='informativo'?'Apenas informativo':'Padrão institucional'}\n\n`;
+  p += `Informações:\n`;
+  (CAMPOS[d.tipo]||[]).forEach(f => {
+    p += d[f.id] ? `- ${f.label}: ${d[f.id]}\n` : `- ${f.label}: [não informado — use [[${f.id.replace('c-','').toUpperCase()}]]]\n`;
+  });
+  if(d.extra) p += `\nAdicionais: ${d.extra}\n`;
+  p += `\nData de hoje: ${new Date().toLocaleDateString('pt-BR',{day:'numeric',month:'long',year:'numeric'})}`;
+  return p;
+}
+
+async function gerar() {
+  if (typeof canGenerate === 'function' && !canGenerate()) {
+    document.getElementById('limit-modal').classList.add('show');
+    return;
+  }
+  const d = coletar();
+  const btn = document.getElementById('btn-gerar');
+  btn.classList.add('loading'); btn.disabled = true;
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('loading-state').classList.add('show');
+  document.getElementById('resultado').classList.remove('show');
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        system: SYSTEM,
+        messages:[{role:'user',content:buildPrompt(d)}]
+      })
+    });
+    const data = await res.json();
+    const txt = data.content?.[0]?.text || '';
+    exibir(txt, d);
+    if (typeof afterGenerate === 'function') await afterGenerate();
+  } catch(e) {
+    alert('Erro ao gerar. Verifique sua conexão.');
+    document.getElementById('empty-state').style.display = 'flex';
+  } finally {
+    btn.classList.remove('loading'); btn.disabled = false;
+    document.getElementById('loading-state').classList.remove('show');
+  }
+}
+
+function exibir(txt, d) {
+  let html = txt
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\[\[([^\]]+)\]\]/g, (_,c) => `<span class="ce" contenteditable="true" title="Clique para editar">${c}</span>`);
+  document.getElementById('doc-content').innerHTML = html;
+  document.getElementById('res-title').textContent = TITULOS[d.tipo] || 'Comunicado gerado';
+  document.getElementById('doc-fname').textContent = `COMUNICADO_${d.num}_${d.ano}.txt`;
+  document.getElementById('resultado').classList.add('show');
+}
+
+function copiar() {
+  const t = document.getElementById('doc-content').innerText;
+  navigator.clipboard.writeText(t).then(() => {
+    const b = event.target.closest('button');
+    const orig = b.textContent; b.textContent = '✓ Copiado!';
+    setTimeout(() => b.textContent = orig, 2000);
+  });
+}
+
+function imprimir() {
+  const html = document.getElementById('doc-content').innerHTML;
+  const w = window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Comunicado</title>
+    <style>body{font-family:Arial,sans-serif;font-size:13pt;line-height:1.85;padding:40px 60px;color:#000}
+    .ce{background:#fff3cd;border:1px dashed #c9a84c;padding:1px 4px;border-radius:3px}
+    @media print{body{padding:20mm 25mm}}</style></head>
+    <body>${html}</body></html>`);
+  w.document.close(); w.focus();
+  setTimeout(() => w.print(), 500);
+}
+
+function toggleMenu() {
+  document.getElementById('tb-menu').classList.toggle('open');
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('.tb-user')) document.getElementById('tb-menu')?.classList.remove('open');
+});
+
+function showUpgrade() {
+  closeModal();
+  alert('Funcionalidade de pagamento em breve! Entre em contato: contato@circula.app');
+}
+function closeModal() { document.getElementById('limit-modal').classList.remove('show'); }
+
+renderCampos();
+</script>
+</body>
+</html>
