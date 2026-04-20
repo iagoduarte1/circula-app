@@ -706,9 +706,17 @@ function imprimir() {
   const html = document.getElementById('doc-content').innerHTML;
   const w = window.open('','_blank');
   w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Comunicado</title>
-    <style>body{font-family:Arial,sans-serif;font-size:13pt;line-height:1.85;padding:40px 60px;color:#000}
-    .ce{background:#fff3cd;border:1px dashed #c9a84c;padding:1px 4px;border-radius:3px}
-    @media print{body{padding:20mm 25mm}}</style></head>
+    <style>
+    *{box-sizing:border-box}
+    body{font-family:Arial,sans-serif;font-size:12pt;line-height:1.9;
+      padding:25mm 20mm;color:#000;max-width:100%;
+      word-wrap:break-word;overflow-wrap:break-word;white-space:pre-wrap}
+    .ce{background:#fff3cd;border:1px dashed #c9a84c;padding:1px 4px;border-radius:3px;word-break:break-word}
+    @media print{
+      body{padding:20mm 20mm;margin:0;font-size:12pt}
+      @page{margin:20mm 20mm;size:A4}
+    }
+    </style></head>
     <body>${html}</body></html>`);
   w.document.close(); w.focus();
   setTimeout(() => w.print(), 500);
